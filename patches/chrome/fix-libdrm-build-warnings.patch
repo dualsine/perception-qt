@@ -1,0 +1,25 @@
+From 96b0d0389df3a8879f3fca498e5794165707c38a Mon Sep 17 00:00:00 2001
+From: dualsine <dualsine@gmail.com>
+Date: Mon, 17 Dec 2018 19:16:39 +0100
+Subject: [PATCH 1/1] fix libdrm error
+
+---
+ third_party/libdrm/BUILD.gn | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/third_party/libdrm/BUILD.gn b/third_party/libdrm/BUILD.gn
+index a3fed9d694..87579f7d7f 100644
+--- a/third_party/libdrm/BUILD.gn
++++ b/third_party/libdrm/BUILD.gn
+@@ -20,7 +20,7 @@ config("libdrm_config") {
+   # https://patchwork.kernel.org/patch/9628231/ lands.
+   cflags = [ "-Wno-#pragma-messages" ]
+   if (is_clang) {
+-    cflags += [ "-Wno-enum-conversion" ]
++    cflags += [ "-Wno-enum-conversion", "-Wno-implicit-function-declaration" ]
+   }
+ }
+ 
+-- 
+2.20.0
+

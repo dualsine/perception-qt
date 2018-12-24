@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>internal_scheme_frontend/dist/options/index.html</file>
+    <file>internal_scheme_frontend/dist/options/imgs/react.svg</file>
+</qresource>
+</RCC>

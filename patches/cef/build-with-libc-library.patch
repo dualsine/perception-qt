@@ -1,0 +1,33 @@
+From bf062aa4df48b5d357bd05da78feee26703bd4bb Mon Sep 17 00:00:00 2001
+From: dualsine <dualsine@gmail.com>
+Date: Tue, 18 Dec 2018 17:54:06 +0100
+Subject: [PATCH 1/1] build with libc++
+
+---
+ CMakeLists.txt.in | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/CMakeLists.txt.in b/CMakeLists.txt.in
+index 034ce56..780b689 100644
+--- a/CMakeLists.txt.in
++++ b/CMakeLists.txt.in
+@@ -122,6 +122,16 @@ project(cef)
+ # Use folders in the resulting project files.
+ set_property(GLOBAL PROPERTY OS_FOLDERS ON)
+ 
++# build with libc++ from chromium
++find_program(CCACHE_FOUND ccache)
++if(CCACHE_FOUND)
++    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
++    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
++endif(CCACHE_FOUND)
++
++set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/llvm-build/Release+Asserts/bin/clang++")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLLVM_ENABLE_ASSERTIONS=ON -DLIBCXX_ENABLE_ASSERTIONS=ON -std=c++14 -fno-exceptions -fno-rtti -nostdinc++ -isystem${CMAKE_CURRENT_SOURCE_DIR}/../../../buildtools/third_party/libc++/trunk/include -isystem${CMAKE_CURRENT_SOURCE_DIR}/../../../buildtools/third_party/libc++abi/trunk/include -fvisibility-inlines-hidden")
++set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+ 
+ #
+ # CEF_ROOT setup.
+-- 
+2.20.1
+

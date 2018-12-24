@@ -1,0 +1,61 @@
+#include "server.h"
+#include "observer.h"
+#include "events.h"
+#include "deserializator.h"
+
+#include <vector>
+
+#define CHECK(x, y) if (x) printf("\nPERCEPTION SIGNALS (SERVER) ASSERT FAILED: %s\n", y);
+
+namespace Perception {
+  namespace Signals {
+
+    Server::Server() {}
+
+    void Server::run() {
+      context_ = zmq_ctx_new();
+      socket_ = zmq_socket(context_, ZMQ_ROUTER);
+      zmq_setsockopt(socket_, ZMQ_IDENTITY, "server", 6);
+      printf("server started\n");
+
+      const char* server_address = std::string("tcp://*:"+port_).c_str();
+      int code = zmq_bind(socket_, server_address);
+      CHECK(code != 0, "could not bind address")
+      
+      while (loop_active_) {
+        // initialize messages and wait for message
+        std::string encrypted_message, remote_identity;
+        getMessage(encrypted_message, remote_identity);
+
+        Deserializator des(encrypted_message);
+        int event_id = des.eventId();
+        switch (event_id) {
+        case Events::MouseClick:
+          float x = std::stof(des.next());
+          float y = std::stof(des.next());
+          std::vector<Observer*>* observers = Observer::getObservers();
+          for (int i=0; i<observers->size(); i++) {
+            observers->at(i)->OnMouseClick(x, y);
+          }
+        }
+      }
+
+      zmq_close (socket_);
+      zmq_ctx_destroy (context_);
+      pthread_exit(nullptr);
+    }
+
+    void Server::sendMessage(std::string text, std::string remote_identity) {
+      s_sendmore(socket_, (char*) remote_identity.c_str());
+      s_sendmore(socket_, (char*) "");
+      s_send(socket_, (char*) text.c_str());
+    }
+
+    void Server::getMessage(std::string &message, std::string &remote_identity) {
+      remote_identity = s_recv(socket_); // remote_identity
+      s_recv(socket_); // empty frame
+      message = s_recv(socket_); // main message
+    }
+
+  } // namespace Signals
+} // namespace Perception

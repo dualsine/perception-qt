@@ -1,0 +1,27 @@
+From f0e82df9213c0f8662dc5cb90a8d3cac171daee9 Mon Sep 17 00:00:00 2001
+From: dualsine <dualsine@gmail.com>
+Date: Mon, 17 Dec 2018 19:24:24 +0100
+Subject: [PATCH 1/1] fix CUPS build error
+
+---
+ printing/BUILD.gn | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/printing/BUILD.gn b/printing/BUILD.gn
+index 83d6eecff5..304a157240 100644
+--- a/printing/BUILD.gn
++++ b/printing/BUILD.gn
+@@ -80,6 +80,10 @@ component("printing") {
+   cflags = []
+   defines = [ "PRINTING_IMPLEMENTATION" ]
+ 
++  if (is_clang) {
++    cflags += [ "-Wno-deprecated-declarations" ]
++  }
++
+   public_deps = [
+     "//printing/buildflags",
+   ]
+-- 
+2.20.0
+

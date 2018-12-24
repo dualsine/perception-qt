@@ -1,0 +1,293 @@
+From 49a7db5dca46e842828dd79dd1649dee66d7a930 Mon Sep 17 00:00:00 2001
+From: dualsine <dualsine@gmail.com>
+Date: Mon, 17 Dec 2018 11:51:40 +0100
+Subject: [PATCH 1/1] added inspector class
+
+---
+ BUILD.gn                      |  2 ++
+ cef_paths.gypi                |  8 ++++-
+ include/capi/cef_app_capi.h   | 10 +++++-
+ include/cef_app.h             |  7 +++++
+ include/cef_inspector.h       | 58 +++++++++++++++++++++++++++++++++++
+ libcef/browser/context.cc     |  5 +++
+ libcef/inspector/inspector.cc | 24 +++++++++++++++
+ libcef/inspector/inspector.h  | 27 ++++++++++++++++
+ 8 files changed, 139 insertions(+), 2 deletions(-)
+ create mode 100644 include/cef_inspector.h
+ create mode 100644 libcef/inspector/inspector.cc
+ create mode 100644 libcef/inspector/inspector.h
+
+diff --git a/BUILD.gn b/BUILD.gn
+index 598f3dd..178e639 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -611,6 +611,8 @@ static_library("libcef_static") {
+     "libcef/renderer/v8_impl.h",
+     "libcef/utility/content_utility_client.cc",
+     "libcef/utility/content_utility_client.h",
++    "libcef/inspector/inspector.cc",
++    "libcef/inspector/inspector.h",
+ 
+     # Part of //chrome/renderer. Not included by that target because CEF builds
+     # with enable_print_preview=0.
+diff --git a/cef_paths.gypi b/cef_paths.gypi
+index e261a77..1ab6cdd 100644
+--- a/cef_paths.gypi
++++ b/cef_paths.gypi
+@@ -8,7 +8,7 @@
+ # by hand. See the translator.README.txt file in the tools directory for
+ # more information.
+ #
+-# $hash=67bc21133e37f5361a39f25dcfe004616d467dbc$
++# $hash=67cac05b7250b94eb3de9af6af459f24fb105295$
+ #
+ 
+ {
+@@ -39,6 +39,7 @@
+       'include/cef_focus_handler.h',
+       'include/cef_frame.h',
+       'include/cef_image.h',
++      'include/cef_inspector.h',
+       'include/cef_jsdialog_handler.h',
+       'include/cef_keyboard_handler.h',
+       'include/cef_life_span_handler.h',
+@@ -130,6 +131,7 @@
+       'include/capi/cef_focus_handler_capi.h',
+       'include/capi/cef_frame_capi.h',
+       'include/capi/cef_image_capi.h',
++      'include/capi/cef_inspector_capi.h',
+       'include/capi/cef_jsdialog_handler_capi.h',
+       'include/capi/cef_keyboard_handler_capi.h',
+       'include/capi/cef_life_span_handler_capi.h',
+@@ -286,6 +288,8 @@
+       'libcef_dll/cpptoc/get_extension_resource_callback_cpptoc.h',
+       'libcef_dll/cpptoc/image_cpptoc.cc',
+       'libcef_dll/cpptoc/image_cpptoc.h',
++      'libcef_dll/cpptoc/inspector_cpptoc.cc',
++      'libcef_dll/cpptoc/inspector_cpptoc.h',
+       'libcef_dll/cpptoc/jsdialog_callback_cpptoc.cc',
+       'libcef_dll/cpptoc/jsdialog_callback_cpptoc.h',
+       'libcef_dll/ctocpp/jsdialog_handler_ctocpp.cc',
+@@ -568,6 +572,8 @@
+       'libcef_dll/ctocpp/get_extension_resource_callback_ctocpp.h',
+       'libcef_dll/ctocpp/image_ctocpp.cc',
+       'libcef_dll/ctocpp/image_ctocpp.h',
++      'libcef_dll/ctocpp/inspector_ctocpp.cc',
++      'libcef_dll/ctocpp/inspector_ctocpp.h',
+       'libcef_dll/ctocpp/jsdialog_callback_ctocpp.cc',
+       'libcef_dll/ctocpp/jsdialog_callback_ctocpp.h',
+       'libcef_dll/cpptoc/jsdialog_handler_cpptoc.cc',
+diff --git a/include/capi/cef_app_capi.h b/include/capi/cef_app_capi.h
+index 05e7aa9..e660c21 100644
+--- a/include/capi/cef_app_capi.h
++++ b/include/capi/cef_app_capi.h
+@@ -33,7 +33,7 @@
+ // by hand. See the translator.README.txt file in the tools directory for
+ // more information.
+ //
+-// $hash=ca069c86d9b09fb6f939ce72682e15ce95571ead$
++// $hash=38742c7546de603efba01d9a8d5c3d4a3d0c3e19$
+ //
+ 
+ #ifndef CEF_INCLUDE_CAPI_CEF_APP_CAPI_H_
+@@ -43,6 +43,7 @@
+ #include "include/capi/cef_base_capi.h"
+ #include "include/capi/cef_browser_process_handler_capi.h"
+ #include "include/capi/cef_command_line_capi.h"
++#include "include/capi/cef_inspector_capi.h"
+ #include "include/capi/cef_render_process_handler_capi.h"
+ #include "include/capi/cef_resource_bundle_handler_capi.h"
+ #include "include/capi/cef_scheme_capi.h"
+@@ -141,6 +142,13 @@ CEF_EXPORT int cef_initialize(const struct _cef_main_args_t* args,
+                               cef_app_t* application,
+                               void* windows_sandbox_info);
+ 
++///
++/// Create new inspector class
++///
++CEF_EXPORT struct _cef_inspector_t* create_inspector(
++    struct _cef_frame_t* frame,
++    struct _cef_v8context_t* context);
++
+ ///
+ // This function should be called on the main application thread to shut down
+ // the CEF browser process before the application exits.
+diff --git a/include/cef_app.h b/include/cef_app.h
+index 3962a09..b6bb751 100644
+--- a/include/cef_app.h
++++ b/include/cef_app.h
+@@ -44,6 +44,7 @@
+ #include "include/cef_render_process_handler.h"
+ #include "include/cef_resource_bundle_handler.h"
+ #include "include/cef_scheme.h"
++#include "include/cef_inspector.h"
+ 
+ class CefApp;
+ 
+@@ -79,6 +80,12 @@ bool CefInitialize(const CefMainArgs& args,
+                    CefRefPtr<CefApp> application,
+                    void* windows_sandbox_info);
+ 
++///
++/// Create new inspector class
++///
++/*--cef()--*/
++CefRefPtr<CefInspector> CreateInspector(CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context);
++
+ ///
+ // This function should be called on the main application thread to shut down
+ // the CEF browser process before the application exits.
+diff --git a/include/cef_inspector.h b/include/cef_inspector.h
+new file mode 100644
+index 0000000..15b1fb8
+--- /dev/null
++++ b/include/cef_inspector.h
+@@ -0,0 +1,58 @@
++// Copyright (c) 2012 Marshall A. Greenblatt. All rights reserved.
++//
++// Redistribution and use in source and binary forms, with or without
++// modification, are permitted provided that the following conditions are
++// met:
++//
++//    * Redistributions of source code must retain the above copyright
++// notice, this list of conditions and the following disclaimer.
++//    * Redistributions in binary form must reproduce the above
++// copyright notice, this list of conditions and the following disclaimer
++// in the documentation and/or other materials provided with the
++// distribution.
++//    * Neither the name of Google Inc. nor the name Chromium Embedded
++// Framework nor the names of its contributors may be used to endorse
++// or promote products derived from this software without specific prior
++// written permission.
++//
++// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
++// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
++// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
++// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
++// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
++// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++//
++// ---------------------------------------------------------------------------
++//
++// The contents of this file must follow a specific format in order to
++// support the CEF translator tool. See the translator.README.txt file in the
++// tools directory for more information.
++//
++
++#ifndef CEF_INCLUDE_CEF_INSPECTOR_H_
++#define CEF_INCLUDE_CEF_INSPECTOR_H_
++#pragma once
++
++#include "include/cef_frame.h"
++
++class CefFrame;
++
++///
++/// Class used to connect blink/renderer/core/inspector with cef
++///
++/*--cef(source=library)--*/
++class CefInspector : public virtual CefBaseRefCounted {
++public:
++  ///
++  /// TestRun method
++  ///
++  /*--cef()--*/
++  virtual void TestRun() = 0;
++};
++
++#endif // CEF_INCLUDE_CEF_INSPECTOR_H_
+diff --git a/libcef/browser/context.cc b/libcef/browser/context.cc
+index fe62728..e6c3fb7 100644
+--- a/libcef/browser/context.cc
++++ b/libcef/browser/context.cc
+@@ -14,6 +14,7 @@
+ #include "libcef/common/main_delegate.h"
+ #include "libcef/common/widevine_loader.h"
+ #include "libcef/renderer/content_renderer_client.h"
++#include "libcef/inspector/inspector.h"
+ 
+ #include "base/base_switches.h"
+ #include "base/bind.h"
+@@ -251,6 +252,10 @@ bool CefInitialize(const CefMainArgs& args,
+                                windows_sandbox_info);
+ }
+ 
++CefRefPtr<CefInspector> CreateInspector(CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) {
++  return new Inspector(frame, context);
++}
++
+ void CefShutdown() {
+   // Verify that the context is in a valid state.
+   if (!CONTEXT_STATE_VALID()) {
+diff --git a/libcef/inspector/inspector.cc b/libcef/inspector/inspector.cc
+new file mode 100644
+index 0000000..15c13d9
+--- /dev/null
++++ b/libcef/inspector/inspector.cc
+@@ -0,0 +1,24 @@
++#include "libcef/inspector/inspector.h"
++
++#include <iostream>
++
++using namespace std;
++using blink::MainThreadDebugger;
++using blink::LocalFrame;
++
++Inspector::Inspector(CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) {
++  frame_ = frame;
++  context_ = &context;
++  blink_debugger_ = MainThreadDebugger::Instance();
++  v8inspector_ = blink_debugger_->GetV8Inspector();
++  
++  // LocalFrame* local_frame = *static_cast<LocalFrame*>(frame->web_frame());
++  // context_group_id_ = blink_debugger_->ContextGroupId(local_frame);
++  // V8ChannelImpl channel_();
++  // session_ = v8inspector_->connect(context_group_id_, *channel_, v8_inspector::StringView());
++  // cout << "session_:" << session_ << endl;
++}
++
++void Inspector::TestRun() {
++  cout << "TestRun()" << endl;
++}
+diff --git a/libcef/inspector/inspector.h b/libcef/inspector/inspector.h
+new file mode 100644
+index 0000000..bad50e4
+--- /dev/null
++++ b/libcef/inspector/inspector.h
+@@ -0,0 +1,27 @@
++#ifndef CEF_INSPECTOR_INSPECTOR_H_
++#define CEF_INSPECTOR_INSPECTOR_H_
++#pragma once
++
++#include "include/cef_inspector.h"
++#include "third_party/blink/renderer/core/inspector/main_thread_debugger.h"
++#include "third_party/blink/renderer/core/inspector/devtools_session.h"
++
++using blink::MainThreadDebugger;
++using v8_inspector::V8Inspector;
++
++class Inspector : public CefInspector {
++public:
++  Inspector(CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context);
++  // CefInspector methods
++  void TestRun() override;
++private:
++  CefRefPtr<CefFrame> frame_;
++  CefRefPtr<CefV8Context>* context_;
++  MainThreadDebugger* blink_debugger_;
++  V8Inspector* v8inspector_;
++  
++  IMPLEMENT_REFCOUNTING(Inspector);
++  DISALLOW_COPY_AND_ASSIGN(Inspector);
++};
++
++#endif
+\ No newline at end of file
+-- 
+2.20.0
+

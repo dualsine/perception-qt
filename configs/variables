@@ -1,0 +1,11 @@
+# this file is also read by bash scripts
+
+DEPOT_TOOLS_PATH=/home/damian/Pobrane/cef/depot_tools
+
+CHROME_SRC_PATH=/vms/cef/chromium_git/chromium/src
+CHROME_RELEASE_PATH=$$CHROME_SRC_PATH/out/Release_GN_x64
+LIBCEF_BUILD_PATH=$$CHROME_RELEASE_PATH/libcef
+
+PERCEPTION_SRC_PATH=/code/qt/perception
+PERCEPTION_DEBUG_BUILD_PATH=/tmp/perception_debug_build
+PERCEPTION_RELEASE_BUILD_PATH=/tmp/perception_release_build

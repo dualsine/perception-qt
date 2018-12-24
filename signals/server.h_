@@ -1,0 +1,24 @@
+#pragma once
+#ifndef PERCEPTION_SIGNALS_SERVER_H_
+#define PERCEPTION_SIGNALS_SERVER_H_
+
+#include "base.h"
+#include <QThread>
+
+namespace Perception {
+  namespace Signals {
+
+    class Server : public QThread, public Base {
+    Q_OBJECT
+    public:
+      Server();
+      void run();
+    private:
+      void sendMessage(const std::string msg, std::string remote_identity);
+      void getMessage(std::string &message, std::string &identity);
+    };
+
+  } // namespace Signals
+} // namespace Perception
+
+#endif // PERCEPTION_SIGNALS_SERVER_H_

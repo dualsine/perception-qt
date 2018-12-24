@@ -1,0 +1,10 @@
+
+declare_args() {
+  lib_dirs = [
+    "//out/Release_GN_x64/obj/perception/signals"
+  ]
+  libs = [ 
+    "zmq",
+    "signals_client"
+  ]
+}

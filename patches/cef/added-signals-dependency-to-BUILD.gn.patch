@@ -1,0 +1,24 @@
+From ea834541dc53980f28985433e4355f1129b0706a Mon Sep 17 00:00:00 2001
+From: dualsine <dualsine@gmail.com>
+Date: Mon, 17 Dec 2018 17:05:19 +0100
+Subject: [PATCH 1/1] added signals dependency to BUILD.gn
+
+---
+ BUILD.gn | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BUILD.gn b/BUILD.gn
+index 178e639..db5ecc6 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -653,6 +653,7 @@ static_library("libcef_static") {
+     "libcef/common/extensions/api:extensions_features",
+ 
+     # Normal build dependencies. Should be sorted alphabetically.
++    "//perception/signals:signals_client",
+     "//base",
+     "//base:base_static",
+     "//base/third_party/dynamic_annotations",
+-- 
+2.20.0
+
